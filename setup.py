@@ -9,7 +9,7 @@ with open("README.txt", "r") as f:
     readme += f.read()
 setup(
     name='import_resolve',
-    version='0.1.3',
+    version='0.1.4',
     url='https://github.com/PandaWhoCodes/import_resolve',
     license='MIT',
     author='Thomas Ashish Cherian',

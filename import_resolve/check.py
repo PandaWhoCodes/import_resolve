@@ -1,28 +1,42 @@
 import argparse
+import os
 
 
-def main(project_folder):
+def make_requirements(modules):
     """
-    Main function resolves the pip errors
-    :param project_folder: The project folder which we need to scan
-    :return: NULL
+    Makes a requirements.txt file
+    :param modules: List of modules
+    :return: None
     """
-    try:
-        import sys, os
-        import __main__ as main
-        import glob
-    except ImportError:
-        print("Please do a pip install glob")
-    # this part scans for python files recursively
+    with open("requirements.txt", "w") as f:
+        for module in modules:
+            f.write(module)
+            f.write("\n")
+
+
+def get_files(project_folder):
+    """
+    Recursively goes through the folders to find .py files
+    :param project_folder: The project folder which will be checked
+    :return: file list containing .py files
+    """
+    import glob
     os.chdir(project_folder)
     path = "**/**/**/**/**/**/**/**/**/*.py"
     filelist = list(glob.glob(path, recursive=True))
+    return filelist
+
+
+def get_modules(filelist):
+    """
+    Goes through the python files and extracts the modules
+    :param filelist: list of files to be checked
+    :return: list of modules used in the files
+    """
     str_filelist = " ".join(filelist)
-    modulelist = list()  # list of modules to be checked for
+    modulelist = []
     for file in filelist:
         f = open(file, 'r')
-        if file.endswith(main.__file__):
-            continue
         print('evaluating file: ', file)
         content = f.readlines()
         for line in content:
@@ -53,24 +67,40 @@ def main(project_folder):
                 except ValueError:
                     pass
         f.close()
-
-    # removing duplicates from the list of modules obtained
     modulelist = list(set(modulelist))
-    print("Modules Found")
-    print(modulelist)
-    choice = input("Do you wish to download any modules that are unavailable (requires pip)? (y/n) ").lower()
-    print()
-    for modulename in modulelist:
-        tokens = 'import ' + modulename
+    return modulelist
+
+
+def do_import(modules):
+    """
+    Tries to import the module and does a pip install
+    :param modules: A list of modules
+    :return: None
+    """
+    choice = input("Do you want to download the packages from pip that are not there? (y/n) ").lower()
+    for module in modules:
+        tokens = 'import ' + module
         try:
             exec(tokens)
         except ImportError:
             print('**"', tokens.replace('import', ''), '" cannot be imported. **')
             if choice == 'y':
-                os.system('pip install ' + tokens.replace('import', ''))
+                os.system('pip install ' + module)
         else:
             print(tokens.replace('import', ''), 'imported successfully.')
             pass
+
+
+def main(project_folder):
+    """
+    Main function resolves the pip errors
+    :param project_folder: The project folder which we need to scan
+    :return: NULL
+    """
+    filelist = get_files(project_folder)
+    modulelist = get_modules(filelist)
+    do_import(modulelist)
+    make_requirements(modulelist)
 
 
 def argParser():
@@ -86,3 +116,7 @@ def argParser():
         main(args.project_folder)
     except Exception as e:
         print(e)
+
+
+# if __name__ == '__main__':
+#     main("C:\\Users\\ashis\\Documents\\Py\\Mario-Level-1")
